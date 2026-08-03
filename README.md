@@ -1,7 +1,27 @@
 # lusion.co WebGL/WebGPU Architecture: Systems Reverse Engineering
 
+> **Lead Systems Architect & Security Researcher**: **DDW-X** (`ml3740965@gmail.com`)  
+> **Investigation Scope**: Independent Security Assessment, Low-Level Graphics Reverse Engineering & Architectural Deconstruction  
+> **Target Production Domain**: [lusion.co](https://lusion.co) (Local Decompiled Environment)  
+> **Authorship Notice**: 100% of the reverse engineering workflow, runtime instrumentation harnesses, mathematical modeling, and systems documentation were independently researched, authored, and verified by DDW-X.
+
+---
+
+### Important Legal Notice & Educational Research Disclosure
+
+> [!IMPORTANT]
+> **Fair Use & Reverse Engineering Charter**:  
+> This repository and its accompanying documentation constitute an independent, non-commercial technical case study and educational deep-dive focused on high-performance WebGL 2, WebGPU readiness, V8 runtime memory dynamics, and low-level computer graphics architectures. All static decompilation, dynamic CDP telemetry, and algorithmic profiling conducted against `lusion.co` fall strictly under academic research, educational inquiry, security analysis, and interoperability evaluation under established reverse engineering exemptions (including EU Directive 2009/24/EC and US 17 U.S.C. § 1201(f)).
+
+> [!NOTE]
+> **Proprietary Asset & Trademark Attribution**:  
+> All original visual trademarks, trade dress, textured 3D models, sound recordings, musical compositions, and proprietary aesthetic design identities extracted from the target domain (`lusion.co`) remain the exclusive intellectual property of **Lusion Ltd.** and their respective creators. This repository does NOT commercialize, distribute, or license third-party proprietary assets. All decompiled code fragments, mathematical formulations, and shader excerpts reproduced herein serve solely as illustrative instrumentation for pedagogical analysis and systems architecture reproducibility.
+
+---
+
+
 ## Executive Summary & Environment Specification
-This document records an empirical reverse engineering audit of the client-side graphics architecture powering [lusion.co](https://lusion.co). The production bundle (`/_astro/hoisted.CUO_IjfL.js` decompiled and mapped from the local runtime environment) bypasses standard engine abstractions to maximize hardware throughput on desktop and high-DPI mobile devices.
+This document records an empirical reverse engineering audit conducted independently by **DDW-X (Principal Cybersecurity Researcher & Low-Level Systems Architect)** of the client-side graphics architecture powering [lusion.co](https://lusion.co). 100% of the reverse engineering workflow—including AST parsing scripts, runtime profiling harnesses, mathematical reconstructions, GLSL de-obfuscation routines, and systems documentation—was conceived, designed, and executed from ground zero by DDW-X. The production bundle (`/_astro/hoisted.CUO_IjfL.js` decompiled and mapped from the local runtime environment) bypasses standard engine abstractions to maximize hardware throughput on desktop and high-DPI mobile devices.
 
 ### Runtime Context & Hardware Profile (Local Profiler Audit)
 The application initializes a high-performance WebGL 2 rendering pipeline with dynamic capability negotiation:
@@ -5040,7 +5060,20 @@ The following synthesis table presents the complete engineering architecture of 
 * **Source Integrity**: Decompiled AST analysis verified against `_astro/hoisted.CUO_IjfL.js` and `assets/index.f4419199.js`.
 * **Hardware Validation**: WebGL 2 hardware parameter dump recorded and archived in project audit scratchpad.
 
+---
 
+## 7. Legal Disclaimer, Research Attribution & Educational License
 
+### 7.1. Educational Research & Reverse Engineering Charter
+This repository constitutes an independent, non-commercial technical case study focused on low-level graphics engineering, V8 runtime memory internals, and WebGL/WebGPU pipeline architectures. All decompilation, runtime instrumentation, and algorithmic profiling conducted against `lusion.co` fall under academic research, educational deep-dive, security evaluation, and interoperability analysis under recognized international reverse engineering statutes.
 
+### 7.2. Intellectual Property & Asset Attribution
+* **Original Brand & Visual Assets**: All original visual trademarks, trade dress, textured 3D models, sound effects, audio compositions, and graphic design assets extracted from or referencing `lusion.co` remain the exclusive property of **Lusion Ltd.** and their respective copyright holders.
+* **No Commercial Distribution**: No proprietary client assets are hosted, sublicensed, or redistributed for commercial gain. Code blocks and shader fragments provided herein are decompiled, de-obfuscated, or reconstructed strictly for architectural analysis and pedagogical reproducibility.
 
+### 7.3. Systems Research & Tooling Authorship
+* **Lead Systems Architect & Security Researcher**: **DDW-X** (`ml3740965@gmail.com`)
+* **Scope of Work**: 100% of the reverse engineering workflow—including the development of AST extraction scripts, GPGPU memory profilers, frame-loop telemetry instrumentation, mathematical kernel derivations (Navier-Stokes advection, 4D Möbius conformal mappings, symplectic collision physics), and technical documentation—was engineered, drafted, and verified independently from zero to completion by **DDW-X**.
+
+### 7.4. Code License
+The analytical tooling, reverse-engineered mathematical formulations, and original technical documentation authored by DDW-X are made available for educational and non-commercial research purposes under the **MIT License**.
