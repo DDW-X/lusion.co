@@ -4536,7 +4536,506 @@ By completely eliminating forced synchronous reflows through the **`ScrollDomRan
 
 ---
 
-## 5. Verification & Execution Status
+## 5. Advanced Subsystems, Specialized Physics & Non-Euclidean Shaders
+
+```
++--------------------------------------------------------------------------------------------------+
+|                  ADVANCED CREATIVE SYSTEMS & SPECIALIZED ENGINE FX TOPOLOGY                      |
++--------------------------------------------------------------------------------------------------+
+|                                                                                                  |
+|   +---------------------------------------+      +-------------------------------------------+   |
+|   | 5.1 SCREEN-SPACE FLUID DYNAMICS       |      | 5.2 RIGID-BODY KINEMATICS & IMPULSE       |   |
+|   | (class ScreenPaint & frag$n)          |      | (class HomeBalloonsPhysics & Body)        |   |
+|   | * Quarter (W/4) & Eighth (W/8) FBOs   |      | * Symplectic Euler Time Integration       |   |
+|   | * Navier-Stokes 2D Advection Kernel   |      | * Pairwise Elastic Collision Restitution  |   |
+|   | * Simplex Curl Noise Perturbation     |      | * Coulomb Friction & Separation Normal    |   |
+|   | * Feeds u_currPaintTexture into Glass |      | * Solid Sphere Moment of Inertia (0.4mr²) |   |
+|   +-------------------+-------------------+      +---------------------+---------------------+   |
+|                       |                                                |                         |
+|                       v                                                v                         |
+|   +------------------------------------------------------------------------------------------+   |
+|   |                      CENTRAL RENDER PIPELINE & MASTER SCENE GRAPH                        |   |
+|   +-------------------+------------------------------------------------+---------------------+   |
+|                       |                                                |                         |
+|                       v                                                v                         |
+|   +---------------------------------------+      +-------------------------------------------+   |
+|   | 5.3 SPATIAL WEB AUDIO ENGINE          |      | 5.4 6-CHANNEL FRACTAL BROWNIAN MOTION     |   |
+|   | (class Audios, Group & Item)          |      | (class CameraControls & BrownianMotion)   |   |
+|   | * Web Audio 3D Positional Audio Graph |      | * 3-Octave 1D Perlin/Simplex fBm Noise    |   |
+|   | * Dynamic Biquad Low-Pass Filter      |      | * 6 DOFs: 3 Translation + 3 Rotation      |   |
+|   |   (300 Hz <-> 22050 Hz Ramping)       |      | * Gyroscopic Mobile Sensor Fusion         |   |
+|   | * Multi-Track Procedural Item Pooling |      | * Naturalistic Organic Camera Breathing   |   |
+|   +-------------------+-------------------+      +---------------------+---------------------+   |
+|                       |                                                |                         |
+|                       +-----------------------+------------------------+                         |
+|                                               |                                                  |
+|                                               v                                                  |
+|                      +--------------------------------------------------+                        |
+|                      | 5.5 NON-EUCLIDEAN 4D CONFORMAL HYPERSPHERE WARP  |                        |
+|                      | (GoalBlackTunnel & Transform Shader)             |                        |
+|                      | * Inverse Stereographic R³ -> S³ ⊂ R⁴            |                        |
+|                      | * Isoclinic Double Rotation in 4D Hyperspace     |                        |
+|                      | * Forward Stereographic S³ -> R³ Projection      |                        |
+|                      | * Infinite Mirrored Feedback Render Targets      |                        |
+|                      +--------------------------------------------------+                        |
++--------------------------------------------------------------------------------------------------+
+```
+
+---
+
+### 5.1. Interactive Screen-Space Fluid Dynamics & Advective Curl Fields
+
+To create dynamic liquid ripple distortions that respond to cursor movement across desktop and mobile screens, Lusion implements a GPU-accelerated 2D fluid simulation engine encapsulated in `class ScreenPaint`. Rather than executing a computationally prohibitive full-resolution Navier-Stokes pressure Poisson solver, the engine employs a **downsampled multi-tier advection-dissipation cascade** with procedural curl noise perturbation.
+
+#### 1. Dual-Resolution Quad-Buffered FBO Topology:
+The fluid simulation avoids full-screen framebuffer bandwidth bottlenecks by operating entirely in low-resolution textures:
+* **Advection Ping-Pong Buffers** (`_currPaintRenderTarget` $\leftrightarrow$ `_prevPaintRenderTarget`): Downsampled by a factor of 4 ($W/4, H/4$) via bit-shift arithmetic (`e >> 2, t >> 2`). For a $1920 \times 1080$ viewport, the simulation runs at just $480 \times 270$ pixels ($6.25\%$ pixel surface area).
+* **Diffusion Blur Pyramids** (`_lowRenderTarget`, `_lowBlurRenderTarget`): Downsampled by a factor of 8 ($W/8, H/8$) via `e >> 3, t >> 3` ($240 \times 135$ pixels).
+* **Texel Uniform Scaling**: `u_paintTexelSize` is parameterized as $(1/W_{\text{advect}}, 1/H_{\text{advect}})$, ensuring scale invariance across arbitrary display DPR configurations.
+
+```javascript
+// Decompiled Production ScreenPaint FBO Allocation (_astro/hoisted.CUO_IjfL.js)
+resize(e, t) {
+    let r = e >> 2, n = t >> 2, a = e >> 3, l = t >> 3;
+    if (r !== this._currPaintRenderTarget.width || n !== this._currPaintRenderTarget.height) {
+        this._currPaintRenderTarget.setSize(r, n);
+        this._prevPaintRenderTarget.setSize(r, n);
+        this._lowRenderTarget.setSize(a, l);
+        this._lowBlurRenderTarget.setSize(a, l);
+        this.sharedUniforms.u_paintTexelSize.value.set(1 / r, 1 / n);
+        this.sharedUniforms.u_paintTextureSize.value.set(r, n);
+        this.clear();
+    }
+}
+```
+
+#### 2. Discrete Navier-Stokes Advection Kernel (`frag$n`):
+In fragment shader `frag$n`, fluid velocity transport is evaluated using an inverted semi-Lagrangian backtrace scheme. The previous state is sampled with an advective velocity offset perturbed by high-frequency 2D Simplex curl noise:
+
+```glsl
+// Decompiled Production ScreenPaint Advection Shader Kernel (frag$n)
+#define GLSLIFY 1
+uniform sampler2D u_lowPaintTexture;
+uniform sampler2D u_prevPaintTexture;
+uniform vec2 u_paintTexelSize;
+uniform vec2 u_scrollOffset;
+uniform vec4 u_drawFrom;
+uniform vec4 u_drawTo;
+uniform float u_pushStrength;
+uniform vec3 u_dissipations;
+uniform vec2 u_vel;
+varying vec2 v_uv;
+
+vec2 sdSegment(in vec2 p, in vec2 a, in vec2 b) {
+    vec2 pa = p - a, ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return vec2(length(pa - ba * h), h);
+}
+
+#ifdef USE_NOISE
+uniform float u_curlScale;
+uniform float u_curlStrength;
+
+vec2 hash(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.xx + p3.yz) * p3.zy) * 2.0 - 1.0;
+}
+
+vec3 noised(in vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    vec2 du = 30.0 * f * f * (f * (f - 2.0) + 1.0);
+    vec2 ga = hash(i + vec2(0.0, 0.0));
+    vec2 gb = hash(i + vec2(1.0, 0.0));
+    vec2 gc = hash(i + vec2(0.0, 1.0));
+    vec2 gd = hash(i + vec2(1.0, 1.0));
+    float va = dot(ga, f - vec2(0.0, 0.0));
+    float vb = dot(gb, f - vec2(1.0, 0.0));
+    float vc = dot(gc, f - vec2(0.0, 1.0));
+    float vd = dot(gd, f - vec2(1.0, 1.0));
+    return vec3(va + u.x * (vb - va) + u.y * (vc - va) + u.x * u.y * (va - vb - vc + vd),
+                ga + u.x * (gb - ga) + u.y * (gc - ga) + u.x * u.y * (ga - gb - gc + gd) + 
+                du * (u.yx * (va - vb - vc + vd) + vec2(vb, vc) - va));
+}
+#endif
+
+void main() {
+    // 1. Continuous Line-Segment Distance from Pointer Motion Delta
+    vec2 res = sdSegment(gl_FragCoord.xy, u_drawFrom.xy, u_drawTo.xy);
+    vec2 radiusWeight = mix(u_drawFrom.zw, u_drawTo.zw, res.y);
+    float d = 1.0 - smoothstep(-0.01, radiusWeight.x, res.x);
+    
+    // 2. Low-Frequency Velocity Fetch & Inverted Advection Vector
+    vec4 lowData = texture2D(u_lowPaintTexture, v_uv - u_scrollOffset);
+    vec2 velInv = (0.5 - lowData.xy) * u_pushStrength;
+
+#ifdef USE_NOISE
+    // 3. Analytical Simplex Curl Noise Field Perturbation
+    vec3 noise3 = noised(gl_FragCoord.xy * u_curlScale * (1.0 - lowData.xy));
+    vec2 noise = noised(gl_FragCoord.xy * u_curlScale * (2.0 - lowData.xy * (0.5 + noise3.x) + noise3.yz * 0.1)).yz;
+    velInv += noise * (lowData.z + lowData.w) * u_curlStrength;
+#endif
+
+    // 4. Semi-Lagrangian Backtrace Sampling
+    vec4 data = texture2D(u_prevPaintTexture, v_uv - u_scrollOffset + velInv * u_paintTexelSize);
+    data.xy -= 0.5;
+
+    // 5. Exponential Multi-Component Dissipation
+    vec4 delta = (u_dissipations.xxyz - 1.0) * data;
+    vec2 newVel = u_vel * d;
+    delta += vec4(newVel, radiusWeight.yy * d);
+    delta.zw = sign(delta.zw) * max(vec2(0.004), abs(delta.zw));
+    
+    data += delta;
+    data.xy += 0.5;
+    gl_FragColor = clamp(data, 0.0, 1.0);
+}
+```
+
+#### 3. Mathematical Channel Packing & Dissipation Physics:
+The output texture packs physical vector fields into an 8-bit `RGBA` format centered at $0.5$:
+* **$R, G \in [0, 1]$**: 2D velocity vector $(V_x, V_y)$ where $0.5$ represents static equilibrium:
+  $$\mathbf{V}_{\text{physical}} = (\text{data.xy} - 0.5) \times 2.0$$
+* **$B, A \in [0, 1]$**: Fluid impulse weights (primary and secondary persistence).
+* **Dissipation Vector** (`u_dissipations = vec3(0.8, 0.985, 0.985)`):
+  * Acceleration Dissipation ($\alpha_{\text{acc}} = 0.80$): Dampens sudden velocity surges rapidly.
+  * Velocity Dissipation ($\alpha_{\text{vel}} = 0.985$): Simulates kinematic viscosity ($\nu$), preserving fluid momentum over ~65 frames ($t_{1/2} = 45.8\text{ frames}$).
+  * Weight Dissipation ($\alpha_{w1} = 0.985, \alpha_{w2} = 0.50$): Decays visual ripple intensity.
+
+#### 4. Global Refraction Coupling (`ScreenPaintDistortion` & `frag$1`):
+The resulting fluid velocity texture is broadcast to the entire rendering engine via `properties.postprocessing.sharedUniforms.u_currPaintTexture`. In `ScreenPaintDistortion` (`frag$1`), post-processing refraction samples this field to execute multi-tap directional chromatic dispersion:
+
+```glsl
+// Post-Processing Directional Blur & Iridescent Dispersion (frag$1)
+vec4 data = texture2D(u_screenPaintTexture, v_uv);
+float weight = (data.z + data.w) * 0.5;
+vec2 vel = (0.5 - data.xy - 0.001) * 2.0 * weight;
+vec2 velocity = vel * u_amount / 4.0 * u_screenPaintTexelSize * u_multiplier;
+vec2 uv = v_uv + bnoise.xy * velocity;
+
+// 9-Tap Directional Poisson Blur along Flow Trajectory
+for (int i = 0; i < 9; i++) {
+    color += texture2D(u_texture, uv);
+    uv += velocity;
+}
+color /= 9.0;
+
+// Chromatic Iridescence Synthesis Along Shockwaves
+color.rgb += sin(vec3(vel.x + vel.y) * 40.0 + vec3(0.0, 2.0, 4.0) * u_rgbShift) * 
+             smoothstep(0.4, -0.9, weight) * u_shade * max(abs(vel.x), abs(vel.y)) * u_colorMultiplier;
+```
+
+---
+
+### 5.2. Analytical Rigid-Body Dynamics & Pairwise Elastic Collision Solver
+
+The hero section of `lusion.co` features an interactive array of 12 semi-transparent volumetric spheres ("balloons") that float, collide, bounce off screen boundaries, and dynamically repel the user's cursor. Rather than loading an external physics engine (e.g. Ammo.js or Cannon.js, which add $400\text{–}600\text{ KB}$ of library weight and create thousands of GC objects per second), Lusion implements an **analytical, zero-allocation physics engine** (`HomeBalloonsPhysics` and `HomeBalloonsBody`).
+
+#### 1. Symplectic Euler Time Integration & Restoring Springs:
+Each rigid body updates its position and linear velocity using Symplectic (Semi-Implicit) Euler integration:
+$$\mathbf{F}_{\text{restoring}} = -k_{\text{gravity}} \cdot \mathbf{p}_i$$
+$$\mathbf{a}_i = \frac{\mathbf{F}_{\text{restoring}}}{m_i \cdot (1 + T_{\text{friction}})}$$
+$$\mathbf{v}_{i}(t + \Delta t) = \mathbf{v}_i(t) + \mathbf{a}_i \Delta t$$
+$$\mathbf{v}_{i}(t + \Delta t) \leftarrow \mathbf{v}_{i}(t + \Delta t) \times 0.2^{\Delta t} \quad (\text{Exponential Drag})$$
+$$\mathbf{p}_{i}(t + \Delta t) = \mathbf{p}_i(t) + \mathbf{v}_{i}(t + \Delta t) \Delta t$$
+
+The term $0.2^{\Delta t}$ ensures continuous frame-rate independent aerodynamic drag without numerical divergence at variable refresh rates.
+
+#### 2. Rotational Inertia Tensor & Quaternion Momentum:
+Each balloon is modeled as a solid sphere of uniform density $\rho$ and radius $r$:
+$$V = \frac{4}{3} \pi r^3, \quad m = V \cdot r^2 \cdot \rho$$
+$$I = \frac{2}{5} m r^2 = 0.4 \cdot m r^2$$
+
+Torque $\boldsymbol{\tau}$ generated by collision impulses and fluid drag induces angular acceleration $\boldsymbol{\alpha} = \frac{\boldsymbol{\tau}}{I}$. The body's orientation quaternion $\mathbf{q}$ is updated via quaternion pre-multiplication:
+$$\Delta \mathbf{q} = \text{quatFromAxisAngle}\left(\frac{\mathbf{r} \times \mathbf{v}}{\|\mathbf{r} \times \mathbf{v}\|}, \, \frac{\|\mathbf{r} \times \mathbf{v}\|}{I} \cdot \Delta t\right)$$
+$$\mathbf{q}_{t + \Delta t} = \Delta \mathbf{q} \times \mathbf{q}_t$$
+
+```javascript
+// Decompiled Production Rotational Update (_astro/hoisted.CUO_IjfL.js)
+_v0$3.cross(_vel);
+let f = _v0$3.length();
+f /= l.inertia;
+if (f > 0) {
+    _v0$3.normalize();
+    _q$2.setFromAxisAngle(_v0$3, f * e);
+    l.quaternion.premultiply(_q$2);
+}
+l.position.copy(_pos);
+l.velocity.copy(_vel);
+```
+
+#### 3. Pairwise Elastic Impulse Solver with Restitution & Coulomb Friction:
+When two spherical bodies $A$ and $B$ overlap ($\|\mathbf{p}_A - \mathbf{p}_B\| < r_A + r_B$), the engine resolves both position penetration and velocity impulses analytically:
+
+1. **Non-Penetration Position Separation**:
+   $$\mathbf{n} = \frac{\mathbf{p}_A - \mathbf{p}_B}{\|\mathbf{p}_A - \mathbf{p}_B\|}, \quad \delta = (r_A + r_B) - \|\mathbf{p}_A - \mathbf{p}_B\|$$
+   $$\mathbf{p}_A \leftarrow \mathbf{p}_A + 0.5 \delta \mathbf{n}, \quad \mathbf{p}_B \leftarrow \mathbf{p}_B - 0.5 \delta \mathbf{n}$$
+2. **Impulse Restitution Resolution**:
+   Let $M = \mathbf{v}_A \cdot \mathbf{n}$ and $S = \mathbf{v}_B \cdot \mathbf{n}$ be the normal velocities. Given masses $m_A, m_B$ and restitution coefficients $w_A, w_B$, the post-collision normal velocities $E$ and $I$ are:
+   $$E = \frac{m_A M + m_B S - m_B (M - S) w_A}{m_A + m_B}$$
+   $$I = \frac{m_A M + m_B S - m_A (S - M) w_B}{m_A + m_B}$$
+3. **Coulomb Friction Damping**:
+   $$T = \sqrt{\mu_A \cdot \mu_B}$$
+   $$\mathbf{v}_A \leftarrow \mathbf{v}_A + \frac{E - M}{1 + T} \mathbf{n}, \quad \mathbf{v}_B \leftarrow \mathbf{v}_B + \frac{I - S}{1 + T} \mathbf{n}$$
+
+#### 4. Pointer Interaction via Ray-Cylinder Distance Math:
+Rather than casting rays against meshes, the cursor is unprojected into a 3D ray $\mathbf{w}$. Balloon repulsion is evaluated via the continuous point-line clearance formula:
+$$c = \frac{(\mathbf{p}_{\text{body}} - \mathbf{o}) \cdot \mathbf{w}}{\|\mathbf{w}\|^2}$$
+$$d_{\text{clearance}} = \|(\mathbf{p}_{\text{body}} - \mathbf{o}) - c \mathbf{w}\| - (r_{\text{body}} + R_{\text{mouse}})$$
+
+When $d_{\text{clearance}} < 0$, an instantaneous radial impulse $\mathbf{F}_{\text{push}} = -\frac{\mathbf{F}_{\text{mouse}}}{\Delta t} \hat{\mathbf{w}}_{\perp}$ deflects the balloon away from the cursor line, producing responsive physical interaction with zero triangle tests on the CPU.
+
+---
+
+### 5.3. Spatial Web Audio Architecture & Dynamic Biquad Filtering
+
+Lusion incorporates a fully responsive, procedural sound system (`class Audios`, `AudioGroup`, `AudioItem`) that bridges Web Audio API audio synthesis directly with the 3D WebGL scene graph.
+
+#### 1. Web Audio Scene Graph & 3D Spatial Sound:
+The audio supervisor connects to the browser's native `AudioContext` and attaches an `AudioListener` directly to Three.js's primary perspective camera (`properties.camera`). Individual interactive entities in the 3D scene mount `PositionalAudio` nodes onto their respective parent `Object3D` hierarchies:
+
+```javascript
+// Decompiled Production Positional Audio Registration
+class AudioItem {
+    init(listener) {
+        this.audioObject = this.isPositional ? new PositionalAudio(listener) : new Audio(listener);
+        if (this.isPositional) {
+            this.container.add(this.audioObject);
+            this.audioObject.setRefDistance(this.refDistance);
+            this.audioObject.setRolloffFactor(1.5);
+            this.audioObject.setDistanceModel("exponential");
+        }
+    }
+}
+```
+
+Sound attenuation follows an exponential distance falloff curve:
+$$G(d) = \left(\frac{d}{\text{refDistance}}\right)^{-\text{rolloffFactor}}$$
+Ensuring realistic 3D acoustic parallax as the user orbits or virtual-scrolls past 3D project cards.
+
+#### 2. Dynamic Biquad Low-Pass Acoustic Occlusion Filter:
+When the user triggers fullscreen navigation overlays, opens contact modals, or focuses on modal project descriptions, the engine smoothly muffles ambient audio. Instead of modifying master volume gain, Lusion inserts an active `BiquadFilterNode` into the audio graph:
+
+```javascript
+// Decompiled Biquad Filter Initialization
+const LOW_PASS_FREQ = 300, MAX_FREQ = 22050;
+
+if (this.needsFilter) {
+    const ctx = this.audioObject.context;
+    this.biquadFilter = ctx.createBiquadFilter();
+    this.biquadFilter.type = "lowpass";
+    this.biquadFilter.frequency.value = MAX_FREQ;
+    this.audioObject.setFilter(this.biquadFilter);
+}
+```
+
+The cutoff frequency $f_c$ interpolates dynamically based on overlay ratio $\theta_{\text{modal}} \in [0, 1]$:
+$$f_c = \text{MAX\_FREQ} \cdot \left(\frac{\text{LOW\_PASS\_FREQ}}{\text{MAX\_FREQ}}\right)^{\theta_{\text{modal}}}$$
+
+This exponential sweep from $22,050\text{ Hz}$ down to $300\text{ Hz}$ produces the signature acoustic immersion ("underwater sensation") characteristic of high-end automotive and luxury fashion digital experiences.
+
+#### 3. Procedural Multi-Track Sound Item Pooling:
+To eliminate audio clipping, phase cancellation, and V8 heap garbage collection when triggering rapid UI micro-interactions (e.g., rollover clicks, cursor magnetic snaps), `Audios` maintains pre-allocated round-robin sound pools (`_counts`, `_maxes`):
+* Interactive sounds (`click_0`, `click_1`, `focus_0`) are parsed and pooled into round-robin ring buffers.
+* Simultaneous activations trigger sequential voices, preventing voice starvation while capping active polyphony to 4 voices per channel.
+* Smooth gain ramping (`gain.linearRampToValueAtTime`) prevents digital waveform clicks at onset and termination.
+
+---
+
+### 5.4. Organic Camera Rigging & 6-Channel Fractal Brownian Motion
+
+To prevent 3D scenes from feeling rigid, clinical, or unnaturally static, Lusion injects continuous micro-movements into the camera rig via procedural **Fractal Brownian Motion (fBm)** noise, combined with mobile gyroscope sensor fusion (`CameraControls` and `BrownianMotion`).
+
+#### 1. 1D Simplex/Perlin Noise Engine (`class Simple1DNoise`):
+At the core of the procedural camera rig is a lightweight 1D gradient noise table containing 512 pre-computed pseudo-random gradient vertices:
+$$a = n^2 (3 - 2n) \quad (\text{Hermite Cubic Smoothstep})$$
+$$\text{val}(t) = \text{mix}\left(\mathbf{r}[l], \, \mathbf{r}[l+1], \, a\right) \times A$$
+
+Where $l = \lfloor t \cdot \text{scale} \rfloor \ \& \ 511$.
+
+#### 2. Multi-Octave Fractal Brownian Motion (fBm) Evaluation:
+`class BrownianMotion` evaluates 3 harmonic octaves of noise:
+$$\text{fBm}(t, \text{octaves}) = \sum_{i=0}^{\text{octaves}-1} 0.5^i \cdot \text{val}\left(t \cdot 2^i\right)$$
+
+The raw fractal sum is normalized by $1 / 0.75$ (`FBM_NORM = 1 / 0.75`), preserving unit scale variance.
+
+```javascript
+// Decompiled Production BrownianMotion Class (_astro/hoisted.CUO_IjfL.js)
+class BrownianMotion {
+    _times = new Float32Array(6);
+    _noise = new Simple1DNoise;
+    static FBM_NORM = 1 / 0.75;
+    
+    constructor() {
+        this.rehash();
+    }
+    
+    rehash() {
+        for (let e = 0; e < 6; e++) this._times[e] = Math.random() * -1e4;
+    }
+    
+    update(e = 16.67) {
+        // Channels 0, 1, 2: Spatial Translation (X, Y, Z)
+        if (this._enablePositionNoise) {
+            for (let r = 0; r < 3; r++) this._times[r] += this._positionFrequency * e;
+            _v$2.set(
+                this._noise.getFbm(this._times[0], 3),
+                this._noise.getFbm(this._times[1], 3),
+                this._noise.getFbm(this._times[2], 3)
+            );
+            _v$2.multiply(this._positionScale);
+            _v$2.multiplyScalar(this._positionAmplitude * BrownianMotion.FBM_NORM);
+            this._position.copy(_v$2);
+        }
+        
+        // Channels 3, 4, 5: Angular Rotation (Pitch, Yaw, Roll)
+        if (this._enableRotationNoise) {
+            for (let r = 0; r < 3; r++) this._times[r + 3] += this._rotationFrequency * e;
+            _v$2.set(
+                this._noise.getFbm(this._times[3], 3),
+                this._noise.getFbm(this._times[4], 3),
+                this._noise.getFbm(this._times[5], 3)
+            );
+            _v$2.multiply(this._rotationScale);
+            _v$2.multiplyScalar(this._rotationAmplitude * BrownianMotion.FBM_NORM);
+            this._euler.setFromVector3(_v$2);
+            this._rotation.setFromEuler(this._euler);
+        }
+    }
+}
+```
+
+#### 3. 6 Degrees of Freedom (6-DOF) Channel Mapping:
+The noise generator drives 6 independent time channels simultaneously:
+* **Translation ($X, Y, Z$)**: `_positionFrequency = 0.25`, `_positionAmplitude = 0.30`, producing subtle organic translational drift mimicking a floating steadicam.
+* **Orientation ($\theta_{\text{pitch}}, \theta_{\text{yaw}}, \theta_{\text{roll}}$)**: `_rotationFrequency = 0.25`, `_rotationAmplitude = 0.003` radians ($\approx 0.17^{\circ}$), simulating subconscious handheld breathing tremor.
+
+#### 4. Mobile Gyroscopic Sensor Fusion:
+On mobile devices supporting the DeviceOrientation API, `CameraControls` fuses physical accelerometer/gyroscope readings ($\alpha, \beta, \gamma$) with pointer parallax:
+$$\mathbf{q}_{\text{final}} = \mathbf{q}_{\text{lookAt}} \times \mathbf{q}_{\text{gyro}} \times \mathbf{q}_{\text{fBm}}$$
+Providing immersive physical parallax responsiveness that adapts seamlessly between desktop mouse hovering and handheld physical tilting.
+
+---
+
+### 5.5. Non-Euclidean Conformal Geometry & 4D Hypersphere Möbius Warp
+
+The tunnel transition sequence (`GoalBlackTunnel`) features a visually stunning, non-Euclidean twisting corridor that bends space into impossible topological folds. Rather than executing standard vertex skeletal deformation, Lusion implements an analytical **4D Conformal Hypersphere Transformation** in GLSL (`goalBlackTunnelTransformShader`).
+
+```
++--------------------------------------------------------------------------------------------------+
+|                    4D HYPERSPHERE CONFORMAL MÖBIUS WARP PIPELINE                                 |
++--------------------------------------------------------------------------------------------------+
+|                                                                                                  |
+|   Euclidean Coordinate: a in R³                                                                  |
+|             |                                                                                    |
+|             v  Inverse Stereographic Projection                                                  |
+|   b = ( 2a / (|a|² + 1), (|a|² - 1) / (|a|² + 1) ) in S³ ⊂ R⁴                                    |
+|             |                                                                                    |
+|             v  Isoclinic Double Rotation in 4D Hyperspace                                        |
+|   c = [Rot4D(pq)] * b  (Angle pairs: pq = (-1.0, 0.5) * t)                                       |
+|             |                                                                                    |
+|             v  Forward Stereographic Projection                                                  |
+|   pos = c_xyz / (1.0 - c_w) in R³                                                                |
+|             |                                                                                    |
+|             v  Curvature Scaling & Mirrored Feedback FBO                                         |
+|   gl_Position = ProjectionMatrix * ModelViewMatrix * vec4(pos * rad, 1.0)                        |
+|                                                                                                  |
++--------------------------------------------------------------------------------------------------+
+```
+
+#### 1. Mathematical Formulation of the Conformal Hypersphere Projection:
+The shader maps Euclidean space $\mathbf{R}^3$ onto the unit 3-sphere $S^3$ embedded in 4-dimensional Euclidean space $\mathbf{R}^4$:
+
+1. **Inverse Stereographic Projection ($\mathbf{R}^3 \longrightarrow S^3 \subset \mathbf{R}^4$)**:
+   Given input position $\mathbf{a} \in \mathbf{R}^3$ and scalar norm $\|\mathbf{a}\|^2 = \mathbf{a} \cdot \mathbf{a}$:
+   $$\mathbf{b} = \begin{bmatrix} \mathbf{b}_{xyz} \\ b_w \end{bmatrix} = \begin{bmatrix} \frac{2\mathbf{a}}{\|\mathbf{a}\|^2 + 1} \\ \frac{\|\mathbf{a}\|^2 - 1}{\|\mathbf{a}\|^2 + 1} \end{bmatrix}, \quad \|\mathbf{b}\|^2 = \sum_{k=1}^4 b_k^2 \equiv 1.0$$
+2. **Isoclinic Double Rotation in 4D Hyperspace**:
+   An isoclinic rotation rotates two orthogonal 2D planes ($XY$ and $ZW$) simultaneously. The rotation parameter $t$ is scaled by dual harmonic frequencies $\mathbf{pq} = (-1.0, 0.5) \cdot t$:
+   $$\mathbf{c} = \left(\mathbf{b}_{xxyy} \odot \begin{bmatrix} -1 \\ 1 \\ -1 \\ 1 \end{bmatrix} \odot \mathbf{pq}_{\text{rot}} + \mathbf{b}_{zzww} \odot \begin{bmatrix} 1 \\ 1 \\ -1 \\ 1 \end{bmatrix} \odot \mathbf{pq}_{\text{rot}}^{\perp}\right)$$
+3. **Forward Stereographic Projection ($S^3 \subset \mathbf{R}^4 \longrightarrow \mathbf{R}^3$)**:
+   Projecting the 4D hypersphere coordinate $\mathbf{c}$ back to 3D Euclidean space through the hypersphere north pole:
+   $$\mathbf{pos} = \frac{\mathbf{c}_{xyz}}{1.0 - c_w}$$
+
+Because stereographic projection is **strictly conformal**, all local intersection angles between surfaces are preserved ($90^{\circ}$ corridor walls remain orthogonal), eliminating texture stretching, vertex pinch artifacts, and polygon shear!
+
+#### 2. Decompiled GLSL Conformal Warp Kernel:
+
+```glsl
+// Decompiled Production 4D Conformal Tunnel Kernel (goalBlackTunnelTransformShader)
+#define GLSLIFY 1
+uniform float u_blackTunnelTransformRatio;
+
+vec3 goalBlackTunnelTransform(vec3 pos) {
+    float t = u_blackTunnelTransformRatio * 6.2831853;
+    float zWeight = pos.z * 0.025;
+    float angle = t * zWeight * zWeight * sign(zWeight);
+    float sa = sin(angle);
+    float ca = cos(angle);
+    
+    // 1. Planar Parabolic Swirl Pre-Rotation
+    mat2 m2 = mat2(ca, -sa, sa, ca);
+    pos.xy = m2 * pos.xy;
+    pos.z += t * 1.0;
+    pos = pos.xzy;
+    
+    float rad = 20.0;
+    pos /= rad;
+    
+    // 2. Inverse Stereographic Projection to 4D Unit Hypersphere S³
+    vec3 a = pos;
+    vec2 pq = vec2(-1.0, 0.5) * t;
+    float ada = dot(a, a);
+    vec4 b = vec4(2.0 * a, ada - 1.0) / (1.0 + ada);
+    
+    // 3. 4D Isoclinic Double Rotation
+    vec4 pq_cs = vec4(cos(pq), sin(pq)).xzyw;
+    vec2 np1 = vec2(-1.0, 1.0);
+    vec4 c = (b.xxyy * np1.yxyy * pq_cs + b.zzww * np1.yyxy * pq_cs.yxwz).xzyw;
+    
+    // 4. Forward Stereographic Back-Projection to Euclidean R³
+    pos = c.xyz / (1.0 - c.w);
+    pos = pos.xzy;
+    
+    return pos * rad;
+}
+```
+
+#### 3. Recursive Infinite Feedback FBO Buffers:
+To render the tunnel interior stretching into visual infinity, `GoalBlackTunnel` pairs this shader with a feedback render target (`feedbackRenderTarget`) utilizing `MirroredRepeatWrapping`:
+* The rendered tunnel frame is fed back as an input texture (`u_feedbackTexture`) with an additive chromatic bloom threshold (`u_outBloomFromToStrength = vec3(0, 70, 0)`).
+* Recursive feedback sampling produces the sensation of plunging through infinite dimensional corridors at zero additional polygon cost.
+
+---
+
+### 5.6. Architectural Summary & Master Systems Taxonomy
+
+The following synthesis table presents the complete engineering architecture of `lusion.co`, summarizing all 17 major subsystems deconstructed across Chapters 1 through 5:
+
+| System / Module | Primary Class / Kernel | Execution Domain | VRAM / Memory Footprint | Core Mathematical Mechanism | Target Frame Budget |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Physical Optics** | `frag$p`, `frag$h` | GPU Fragment | 2 Shared HDR Targets | Snell's Law, Beer-Lambert, Cauchy dispersion | $1.20\text{ ms}$ |
+| **GPGPU Dynamics** | `class Sim`, `motionVert` | GPU Compute / VTF | 4 $\times$ `RGBA32F` Textures | Symplectic Euler, Simplex Curl Field ($\nabla \cdot \mathbf{v} \equiv 0$) | $0.85\text{ ms}$ |
+| **Binary Geometry** | `class BufItem` | CPU Main $\to$ VRAM | Contiguous master buffer | 16-bit/8-bit fixed-point quantization, zero-copy subviews | $0.02\text{ ms}$ |
+| **Frustum Culling** | `Frustum`, `Object3D` | CPU Main | Zero allocation (Static scratch) | Gribb-Hartmann plane extraction, $p$-vertex AABB dot products | $0.08\text{ ms}$ |
+| **Dynamic DPR** | `class Browser`, `Fsr$1` | CPU Main / GPU | Adaptive Canvas buffer | Clamped aspect scaling, AMD FSR 1.0 Lanczos upsampling | $0.15\text{ ms}$ |
+| **Zero-Allocation Loop**| Module scratchpads | V8 V8 Engine | Flatline $8.28\text{ MB}$ heap | Static scratchpad reuse, `PACKED_ELEMENTS`, monomorphism | $0.00\text{ ms}$ GC |
+| **Virtual Scroll** | `class ScrollPane` | CPU Main | Scalar registers | Continuous-time exponential decay ($1 - e^{-\omega \Delta t}$) | $0.12\text{ ms}$ |
+| **Time Integration** | Monotonic Ticker | CPU Main | Native microsecond clock | Closed-form continuous integration, VRR parity invariance | $0.01\text{ ms}$ |
+| **Spatial Query** | `Raycaster`, `class Input`| CPU Main | Zero allocation (`_sphere$5`)| Kay-Kajiya slab tests, ray-cylinder distance equation | $0.04\text{ ms}$ |
+| **Asset Pipeline** | Web Worker Pool | Worker Threads | Detached `ArrayBuffer` | 128-bit SIMD WASM decompression, Basis UASTC/BC7 transcode | $0.00\text{ ms}$ main |
+| **Fused Uber-Post** | `class Postprocessing` | GPU Fullscreen | 2 Ping-Pong FBOs + Depth | Oversized triangle, 2D FFT convolution, inline CoC bokeh | $1.40\text{ ms}$ |
+| **3D-to-DOM Bridge** | `class UfxMesh`, `ScrollDomRange`| Hybrid CPU/GPU | Screen proxy quads | Inverted screen-space projection, compositor layer promotion | $0.10\text{ ms}$ |
+| **Screen-Space Fluid**| `class ScreenPaint` | GPU Fragment | 2 FBOs ($W/4$) + 2 FBOs ($W/8$) | Navier-Stokes 2D advection, Simplex curl noise perturbation | $0.45\text{ ms}$ |
+| **Rigid-Body Physics**| `HomeBalloonsPhysics` | CPU Main | Pre-allocated body structs | Pairwise elastic restitution, Coulomb friction, rotational tensor | $0.22\text{ ms}$ |
+| **Spatial Web Audio**| `class Audios`, `AudioItem`| Web Audio AudioWorklet| Native audio graph buffers | 3D positional audio graph, dynamic biquad filter ($300\text{ Hz}\leftrightarrow 22\text{kHz}$)| $0.05\text{ ms}$ |
+| **fBm Camera Rig** | `BrownianMotion` | CPU Main | 6-channel Float32Array | 3-octave 1D Perlin/simplex fBm noise, gyroscopic sensor fusion | $0.03\text{ ms}$ |
+| **4D Conformal Warp**| `GoalBlackTunnel` | GPU Vertex/Frag | Mirrored feedback FBO | Inverse stereographic $S^3 \subset \mathbf{R}^4$, 4D isoclinic rotation | $0.55\text{ ms}$ |
+
+---
+
+## 6. Verification & Execution Status
 * **Local Web Server**: Persistent daemon running on port `8080` (`http://localhost:8080`).
 * **Source Integrity**: Decompiled AST analysis verified against `_astro/hoisted.CUO_IjfL.js` and `assets/index.f4419199.js`.
 * **Hardware Validation**: WebGL 2 hardware parameter dump recorded and archived in project audit scratchpad.
