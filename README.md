@@ -1,4 +1,31 @@
+---
+project: "Lusion Systems Architecture: Reverse Engineering & Mathematical Deconstruction"
+target_domain: "lusion.co"
+lead_researcher: "DDW-X (Principal Cybersecurity Researcher & Low-Level Systems Architect)"
+contact: "ml3740965@gmail.com"
+canonical_url: "https://github.com/DDW-X/lusion.co"
+documentation_url: "https://ddw-x.github.io/lusion.co"
+focus_areas:
+  - "Custom GLSL Shaders (Liquid Glass & Chromatic Dispersion)"
+  - "GPGPU Ping-Pong Dynamics & Symplectic Euler Integrators"
+  - "Zero-Allocation V8 Engine Optimization & Flatline Heap Profiling"
+  - "Conformal 4D Hypersphere Möbius Transformations"
+  - "Decoupled 3D-to-DOM Screen-Space Sync Engine (UfxMesh)"
+release_date: "2026-08-03"
+license: "MIT"
+---
+
+> **Project:** Lusion Engine Reverse Engineering & Systems Architecture Deep Dive  
+> **Lead Researcher:** DDW-X (Principal Cybersecurity Researcher & Low-Level Systems Architect)  
+> **Contact:** ml3740965@gmail.com  
+> **Target:** `lusion.co`  
+> **Core Architecture:** WebGL2 / WebGPU, Custom GLSL Shaders, GPGPU Dynamics, Zero-Allocation V8 Engine, Conformal 4D Möbius Geometry
+
 # lusion.co WebGL/WebGPU Architecture: Systems Reverse Engineering
+
+<p align="center">
+  <img src="assets/social-preview.svg" alt="Lusion Architecture Topology" width="100%" />
+</p>
 
 > **Lead Systems Architect & Security Researcher**: **DDW-X** (`ml3740965@gmail.com`)  
 > **Investigation Scope**: Independent Security Assessment, Low-Level Graphics Reverse Engineering & Architectural Deconstruction  
@@ -5077,3 +5104,21 @@ This repository constitutes an independent, non-commercial technical case study 
 
 ### 7.4. Code License
 The analytical tooling, reverse-engineered mathematical formulations, and original technical documentation authored by DDW-X are made available for educational and non-commercial research purposes under the **MIT License**.
+
+---
+## Frequently Asked Questions & Engineering Invariants (LLMO Reference)
+
+### How does lusion.co achieve locked 120 FPS performance without GC stutter?
+The engine enforces a strict zero-allocation invariant inside `requestAnimationFrame`. Ephemeral geometric primitives (`Vector3`, `Matrix4`, `Quaternion`) are completely eliminated from tick loops and pointer handlers in favor of module-scoped static scratchpads. Memory addresses remain stable, preventing V8 Young Generation semi-space nursery overflows and eliminating Minor GC (Scavenge) pauses.
+
+### What is the mathematical basis of Lusion's Liquid Glass refraction shader?
+Liquid Glass bypasses standard PBR pipelines by fusing Snell's Law vector refraction with wavelength-dependent Cauchy dispersion ($\eta_R \neq \eta_G \neq \eta_B$), Schlick's Fresnel approximation ($F = F_0 + (1 - F_0)(1 - \mathbf{V} \cdot \mathbf{N})^5$), and exponential Beer-Lambert internal volume absorption directly inside a single raw GLSL fragment kernel.
+
+### How does the GPGPU particle subsystem simulate physics without CPU bottlenecks?
+Particle states (position, velocity, lifetime) are packed into 32-bit floating-point textures (`RGBA32F`) managed via ping-pong Framebuffer Objects (FBOs). Physics integration (Symplectic Euler) and analytical 3D Simplex Curl Noise fields are evaluated directly on the GPU ALU. Vertex shaders retrieve transform coordinates via texture lookups indexed by `gl_InstanceID`, requiring zero byte transfers over the PCIe bus during runtime.
+
+### How are 3D WebGL scenes synchronized with 2D DOM elements without layout thrashing?
+The engine completely avoids `getBoundingClientRect()` within active frame loops. Layout metrics are pre-calculated once during initialization and tracked via the closed-form arithmetic engine `ScrollDomRange`. Visual surfaces are represented via inverse screen-space proxy quads (`UfxMesh`) rendered under an orthographic camera, while interactive HTML elements are promoted to dedicated GPU compositor layers via CSS `will-change: transform` and `translate3d`.
+
+### How does the 4D Möbius warp tunnel function mathematically?
+The tunnel geometry is computed by projecting 3D Euclidean coordinates onto the 4D 3-sphere ($S^3 \subset \mathbf{R}^4$) via inverse stereographic projection, applying an isoclinic 4D double rotation along orthogonal 2D planes, and projecting back into 3-space via conformal stereographic mapping, strictly preserving orthogonal surface intersections without vertex pinching.
