@@ -1,0 +1,227 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#07090e"/>
+      <stop offset="50%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#080a0f"/>
+    </linearGradient>
+    <linearGradient id="cardGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#161b22" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#0d1117" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="blueAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#58a6ff"/>
+      <stop offset="100%" stop-color="#1f6feb"/>
+    </linearGradient>
+    <linearGradient id="purpleAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#bc8cff"/>
+      <stop offset="100%" stop-color="#8957e5"/>
+    </linearGradient>
+    <linearGradient id="greenAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3fb950"/>
+      <stop offset="100%" stop-color="#238636"/>
+    </linearGradient>
+    <filter id="glowBlue" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#21262d" stroke-width="0.75" opacity="0.6"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bgGrad)"/>
+  <rect width="1280" height="640" fill="url(#gridPattern)"/>
+
+  <!-- Ambient Glow Spheres -->
+  <circle cx="240" cy="180" r="180" fill="#58a6ff" opacity="0.05" filter="url(#glowBlue)"/>
+  <circle cx="640" cy="220" r="200" fill="#bc8cff" opacity="0.05" filter="url(#glowBlue)"/>
+  <circle cx="1040" cy="180" r="180" fill="#3fb950" opacity="0.05" filter="url(#glowBlue)"/>
+
+  <!-- Master Header -->
+  <g transform="translate(60, 48)">
+    <!-- Tech Badge -->
+    <rect x="0" y="0" width="310" height="24" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+    <circle cx="12" cy="12" r="4" fill="#3fb950"/>
+    <text x="24" y="16" fill="#8b949e" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="600" letter-spacing="1">SYSTEMS REVERSE ENGINEERING ARCHIVE</text>
+
+    <!-- Main Title -->
+    <text x="0" y="58" fill="#f0f6fc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="30" font-weight="800" letter-spacing="-0.5">LUSION ENGINE TOPOLOGY &amp; ARCHITECTURE</text>
+    <text x="0" y="82" fill="#8b949e" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="400">WebGL2 / WebGPU Core Pipeline Deconstruction • Custom GLSL Optics • Zero-Allocation V8 Engine</text>
+
+    <!-- Author Badge -->
+    <text x="1160" y="32" text-anchor="end" fill="#58a6ff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700">Lead Researcher: DDW-X</text>
+    <text x="1160" y="52" text-anchor="end" fill="#8b949e" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="500">ml3740965@gmail.com</text>
+  </g>
+
+  <!-- Node 1: DOM Bridge & Virtual Scroll -->
+  <g transform="translate(60, 155)">
+    <rect width="360" height="370" rx="12" fill="url(#cardGrad1)" stroke="#30363d" stroke-width="1"/>
+    <rect width="360" height="4" rx="2" fill="url(#blueAccent)"/>
+    
+    <!-- Icon & Subsystem Title -->
+    <rect x="24" y="24" width="36" height="36" rx="8" fill="#1f6feb" fill-opacity="0.2" stroke="#58a6ff" stroke-width="1"/>
+    <text x="42" y="47" text-anchor="middle" fill="#58a6ff" font-family="'JetBrains Mono', Consolas, monospace" font-size="16" font-weight="bold">01</text>
+    <text x="72" y="40" fill="#f0f6fc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="700">DOM Bridge &amp; Virtual Scroll</text>
+    <text x="72" y="56" fill="#8b949e" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12">Reflow-Free Layout &amp; Event Bus</text>
+
+    <!-- Technical Specs -->
+    <g transform="translate(24, 85)" font-family="'JetBrains Mono', Consolas, monospace" font-size="12">
+      <!-- Item 1 -->
+      <circle cx="4" cy="10" r="2.5" fill="#58a6ff"/>
+      <text x="16" y="14" fill="#c9d1d9">ScrollDomRange Arithmetic</text>
+      <text x="16" y="30" fill="#8b949e" font-size="11">Closed-form projection metrics</text>
+
+      <!-- Item 2 -->
+      <circle cx="4" cy="55" r="2.5" fill="#58a6ff"/>
+      <text x="16" y="59" fill="#c9d1d9">UfxMesh Inverted Screen Proxies</text>
+      <text x="16" y="75" fill="#8b949e" font-size="11">Orthographic canvas coordinate map</text>
+
+      <!-- Item 3 -->
+      <circle cx="4" cy="100" r="2.5" fill="#58a6ff"/>
+      <text x="16" y="104" fill="#c9d1d9">Continuous Damping (Lerp)</text>
+      <text x="16" y="120" fill="#8b949e" font-size="11">s(t) = target + (s - target)e^(-ωΔt)</text>
+
+      <!-- Item 4 -->
+      <circle cx="4" cy="145" r="2.5" fill="#58a6ff"/>
+      <text x="16" y="149" fill="#c9d1d9">Zero Reflow Architecture</text>
+      <text x="16" y="165" fill="#8b949e" font-size="11">will-change: transform GPU layers</text>
+
+      <!-- Item 5 -->
+      <circle cx="4" cy="190" r="2.5" fill="#58a6ff"/>
+      <text x="16" y="194" fill="#c9d1d9">Monomorphic V8 Dispatchers</text>
+      <text x="16" y="210" fill="#8b949e" font-size="11">Zero heap churn in passive listeners</text>
+    </g>
+
+    <!-- Status Pill -->
+    <rect x="24" y="322" width="312" height="28" rx="6" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+    <circle cx="38" cy="336" r="3.5" fill="#58a6ff"/>
+    <text x="48" y="340" fill="#79c0ff" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="600">STATE MUTEX: 0 REFLOWS / 120 HZ SYNC</text>
+  </g>
+
+  <!-- Flow Connector 1 -> 2 -->
+  <g transform="translate(420, 310)">
+    <line x1="10" y1="0" x2="30" y2="0" stroke="#30363d" stroke-width="2" stroke-dasharray="4,4"/>
+    <polygon points="36,0 28,-5 28,5" fill="#58a6ff"/>
+    <text x="23" y="-12" text-anchor="middle" fill="#58a6ff" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" font-weight="600">TRANSFORMS</text>
+  </g>
+
+  <!-- Node 2: GPGPU Simulation Engine -->
+  <g transform="translate(460, 155)">
+    <rect width="360" height="370" rx="12" fill="url(#cardGrad1)" stroke="#30363d" stroke-width="1"/>
+    <rect width="360" height="4" rx="2" fill="url(#purpleAccent)"/>
+    
+    <!-- Icon & Subsystem Title -->
+    <rect x="24" y="24" width="36" height="36" rx="8" fill="#8957e5" fill-opacity="0.2" stroke="#bc8cff" stroke-width="1"/>
+    <text x="42" y="47" text-anchor="middle" fill="#bc8cff" font-family="'JetBrains Mono', Consolas, monospace" font-size="16" font-weight="bold">02</text>
+    <text x="72" y="40" fill="#f0f6fc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="700">GPGPU Simulation Engine</text>
+    <text x="72" y="56" fill="#8b949e" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12">GPU ALU Particle Dynamics</text>
+
+    <!-- Technical Specs -->
+    <g transform="translate(24, 85)" font-family="'JetBrains Mono', Consolas, monospace" font-size="12">
+      <!-- Item 1 -->
+      <circle cx="4" cy="10" r="2.5" fill="#bc8cff"/>
+      <text x="16" y="14" fill="#c9d1d9">Double-Buffered RGBA32F FBOs</text>
+      <text x="16" y="30" fill="#8b949e" font-size="11">Ping-pong state textures (pos + vel)</text>
+
+      <!-- Item 2 -->
+      <circle cx="4" cy="55" r="2.5" fill="#bc8cff"/>
+      <text x="16" y="59" fill="#c9d1d9">Symplectic Euler Integration</text>
+      <text x="16" y="75" fill="#8b949e" font-size="11">Energy-conserving phase space update</text>
+
+      <!-- Item 3 -->
+      <circle cx="4" cy="100" r="2.5" fill="#bc8cff"/>
+      <text x="16" y="104" fill="#c9d1d9">Simplex 3D Curl Noise Field</text>
+      <text x="16" y="120" fill="#8b949e" font-size="11">v = ∇ × ψ divergence-free advection</text>
+
+      <!-- Item 4 -->
+      <circle cx="4" cy="145" r="2.5" fill="#bc8cff"/>
+      <text x="16" y="149" fill="#c9d1d9">Zero PCIe Bus Transfers</text>
+      <text x="16" y="165" fill="#8b949e" font-size="11">gl_InstanceID texture coordinate fetch</text>
+
+      <!-- Item 5 -->
+      <circle cx="4" cy="190" r="2.5" fill="#bc8cff"/>
+      <text x="16" y="194" fill="#c9d1d9">ScreenPaint Fluid Cascade</text>
+      <text x="16" y="210" fill="#8b949e" font-size="11">W/4 advection + W/8 diffusion FBOs</text>
+    </g>
+
+    <!-- Status Pill -->
+    <rect x="24" y="322" width="312" height="28" rx="6" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+    <circle cx="38" cy="336" r="3.5" fill="#bc8cff"/>
+    <text x="48" y="340" fill="#d2a8ff" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="600">THROUGHPUT: 65,536 PARTICLES @ 120 FPS</text>
+  </g>
+
+  <!-- Flow Connector 2 -> 3 -->
+  <g transform="translate(820, 310)">
+    <line x1="10" y1="0" x2="30" y2="0" stroke="#30363d" stroke-width="2" stroke-dasharray="4,4"/>
+    <polygon points="36,0 28,-5 28,5" fill="#bc8cff"/>
+    <text x="23" y="-12" text-anchor="middle" fill="#bc8cff" font-family="'JetBrains Mono', Consolas, monospace" font-size="10" font-weight="600">INSTANCE FBO</text>
+  </g>
+
+  <!-- Node 3: Liquid Glass & Fused Optics -->
+  <g transform="translate(860, 155)">
+    <rect width="360" height="370" rx="12" fill="url(#cardGrad1)" stroke="#30363d" stroke-width="1"/>
+    <rect width="360" height="4" rx="2" fill="url(#greenAccent)"/>
+    
+    <!-- Icon & Subsystem Title -->
+    <rect x="24" y="24" width="36" height="36" rx="8" fill="#238636" fill-opacity="0.2" stroke="#3fb950" stroke-width="1"/>
+    <text x="42" y="47" text-anchor="middle" fill="#3fb950" font-family="'JetBrains Mono', Consolas, monospace" font-size="16" font-weight="bold">03</text>
+    <text x="72" y="40" fill="#f0f6fc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="700">Liquid Glass &amp; Fused Optics</text>
+    <text x="72" y="56" fill="#8b949e" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12">Raw GLSL ES 3.00 Fragment Pass</text>
+
+    <!-- Technical Specs -->
+    <g transform="translate(24, 85)" font-family="'JetBrains Mono', Consolas, monospace" font-size="12">
+      <!-- Item 1 -->
+      <circle cx="4" cy="10" r="2.5" fill="#3fb950"/>
+      <text x="16" y="14" fill="#c9d1d9">Cauchy Chromatic Dispersion</text>
+      <text x="16" y="30" fill="#8b949e" font-size="11">η_R ≠ η_G ≠ η_B spectral split</text>
+
+      <!-- Item 2 -->
+      <circle cx="4" cy="55" r="2.5" fill="#3fb950"/>
+      <text x="16" y="59" fill="#c9d1d9">Snell Refraction &amp; Fresnel</text>
+      <text x="16" y="75" fill="#8b949e" font-size="11">F = F0 + (1 - F0)(1 - V·N)^5</text>
+
+      <!-- Item 3 -->
+      <circle cx="4" cy="100" r="2.5" fill="#3fb950"/>
+      <text x="16" y="104" fill="#c9d1d9">Beer-Lambert Volume Absorption</text>
+      <text x="16" y="120" fill="#8b949e" font-size="11">Transmittance T = exp(-σ_a · d)</text>
+
+      <!-- Item 4 -->
+      <circle cx="4" cy="145" r="2.5" fill="#3fb950"/>
+      <text x="16" y="149" fill="#c9d1d9">Fused Single-Pass Uber-Post</text>
+      <text x="16" y="165" fill="#8b949e" font-size="11">Bloom + ToneMap + Vignette collapsed</text>
+
+      <!-- Item 5 -->
+      <circle cx="4" cy="190" r="2.5" fill="#3fb950"/>
+      <text x="16" y="194" fill="#c9d1d9">Conformal 4D Möbius Warp</text>
+      <text x="16" y="210" fill="#8b949e" font-size="11">Inverse S^3 hypersphere isoclinic rotation</text>
+    </g>
+
+    <!-- Status Pill -->
+    <rect x="24" y="322" width="312" height="28" rx="6" fill="#161b22" stroke="#21262d" stroke-width="1"/>
+    <circle cx="38" cy="336" r="3.5" fill="#3fb950"/>
+    <text x="48" y="340" fill="#7ee787" font-family="'JetBrains Mono', Consolas, monospace" font-size="11" font-weight="600">PASS KERNEL: ZERO PBR OVERHEAD / RAW GLSL</text>
+  </g>
+
+  <!-- Bottom Metric & Invariant Bar -->
+  <g transform="translate(60, 550)">
+    <rect width="1160" height="52" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+    
+    <!-- Invariant 1 -->
+    <text x="40" y="31" fill="#79c0ff" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700">HEAP INVARIANT:</text>
+    <text x="160" y="31" fill="#c9d1d9" font-family="'JetBrains Mono', Consolas, monospace" font-size="12">0.00 KB Nursery Churn</text>
+
+    <!-- Invariant 2 -->
+    <text x="360" y="31" fill="#bc8cff" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700">TICK ENGINE:</text>
+    <text x="465" y="31" fill="#c9d1d9" font-family="'JetBrains Mono', Consolas, monospace" font-size="12">120 FPS Closed-Form VRR</text>
+
+    <!-- Invariant 3 -->
+    <text x="690" y="31" fill="#3fb950" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700">ASSET PIPELINE:</text>
+    <text x="815" y="31" fill="#c9d1d9" font-family="'JetBrains Mono', Consolas, monospace" font-size="12">WASM SIMD + Basis BC7</text>
+
+    <!-- Invariant 4 -->
+    <text x="1010" y="31" fill="#ffa657" font-family="'JetBrains Mono', Consolas, monospace" font-size="12" font-weight="700">LICENSE:</text>
+    <text x="1080" y="31" fill="#c9d1d9" font-family="'JetBrains Mono', Consolas, monospace" font-size="12">MIT Academic</text>
+  </g>
+</svg>

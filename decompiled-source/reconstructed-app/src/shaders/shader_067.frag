@@ -1,0 +1,2 @@
+#define GLSLIFY 1
+varying float v_softness;varying float v_opacity;varying vec3 v_color;float linearStep(float edge0,float edge1,float x){return clamp((x-edge0)/(edge1-edge0),0.0,1.0);}void main(){float d=length(gl_PointCoord.xy*2.0-1.0);float b=linearStep(0.0,v_softness+fwidth(d),1.0-d);vec3 color=v_color*b*v_opacity;gl_FragColor=vec4(color,b*v_opacity);}

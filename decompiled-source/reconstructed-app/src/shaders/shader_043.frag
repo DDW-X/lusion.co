@@ -1,0 +1,2 @@
+#define GLSLIFY 1
+uniform sampler2D u_textureFrom;uniform sampler2D u_textureTo;varying vec2 v_uv;void main(){vec4 from=texture2D(u_textureFrom,v_uv);vec4 to=texture2D(u_textureTo,v_uv);float alpha=from.a;gl_FragColor=vec4(to.rgb,alpha);}
