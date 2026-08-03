@@ -1,0 +1,39 @@
+MIT License
+
+Copyright (c) 2026 DDW-X <ml3740965@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software, reverse-engineered mathematical formulations, analytical
+tooling, and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+DISCLAIMER & INTELLECTUAL PROPERTY NOTICE:
+This Software and its documentation represent an independent, non-commercial
+educational case study, security assessment, and graphics systems reverse
+engineering audit conducted solely by DDW-X (Principal Cybersecurity Researcher
+& Low-Level Systems Architect).
+
+All original visual trademarks, trade dress, textured 3D models, sound recordings,
+audio compositions, and brand identities extracted from or referencing
+the target production domain (lusion.co) remain the exclusive intellectual
+property of Lusion Ltd. and their respective original creators.
+
+Nothing in this License grants any commercial rights, title, or licenses to
+proprietary brand assets, raw artistic media, or client identities. All
+decompiled code excerpts, shader reproductions, and mathematical models are
+provided strictly for educational analysis, academic research, and interoperability
+purposes under recognized international reverse engineering safe-harbor provisions.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
